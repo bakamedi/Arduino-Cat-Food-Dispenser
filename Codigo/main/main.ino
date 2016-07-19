@@ -49,7 +49,7 @@ void loop(){
   //servo.write(0);
   //cm = ultrasonic.Ranging(CM);
   //lcd.print(ultrasonic.Ranging(CM)); // CM or INC
-  //lcd.print("cm");;
+  //lcd.print("cm");
   char key = myKeypad.getKey();
   if (key=='1'||key=='2'||key=='3'||key=='4'||key=='5'||key=='6'||key=='7'||key=='8'||key=='9'||key=='0'){
       lcd.print(key);
