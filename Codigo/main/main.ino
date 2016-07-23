@@ -2,10 +2,12 @@
 #include <Keypad.h>
 #include <Ultrasonic.h>
 #include <LiquidCrystal.h>
-#include "TimerObject.h"
-TimerObject *timer1 = new TimerObject(2000);
-TimerObject *timer2 = new TimerObject(3000);
+#include <Thread.h>
+#include <NewList.h>
+#include <String.h>
+//#include <DueTimer.h>
 
+Thread myThread = Thread();
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // LCD arduino library
 Ultrasonic ultrasonic(10,8); // (Trig PIN,Echo PIN)
 Servo servo;  // Crea un Objeto servo
@@ -22,23 +24,34 @@ byte rowPins[rows] = {A0, A1, A2, A3}; //connect to the row pinouts of the keypa
 byte colPins[cols] = {A4, A5, 11}; //connect to the column pinouts of the keypad
 Keypad myKeypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 char tiempo[6]="00:00";
-
+int cont = 0;
+char tiempoEscodigo[6];
+char h1[2] = {0};
+char h2[2] = {0};
+char m1[2] = {0};
+char m2[2] = {0};
 
 void setup() {
-lcd.begin(16, 2);
-servo.attach(9);
-lcd.print(tiempo);
-delay(1000);
-lcd.clear();
-//Inicializamos la comunicacion por Serial
-Serial.begin(9600);
+  lcd.begin(16, 2);
+  servo.attach(9);
+  lcd.print(tiempo);
+ 
+  //delay(2000);
+  lcd.clear();
+  myThread.onRun(abreServo);
+  myThread.setInterval(5000); //5000 segundos
+  //Inicializamos la comunicacion por Serial
+  Serial.begin(9600);
 }
 
-void Puerta1(){
+void abreServo(){
   servo.write(90);
-}
-void Puerta2(){
+  delay(1000);
   servo.write(0);
+}
+
+int calculaHoraAsegundo(int hora){
+  return hora * 360 * 1000;
 }
 
 void loop(){
@@ -50,37 +63,42 @@ void loop(){
   //cm = ultrasonic.Ranging(CM);
   //lcd.print(ultrasonic.Ranging(CM)); // CM or INC
   //lcd.print("cm");
+  
   char key = myKeypad.getKey();
   if (key=='1'||key=='2'||key=='3'||key=='4'||key=='5'||key=='6'||key=='7'||key=='8'||key=='9'||key=='0'){
-      lcd.print(key);
-      for(int i = 0;i < 6;i++){
-        if(tiempo[i]!=':'){
-          tiempo[i]=key;
+      //lcd.print(key);
+      lcd.clear();
+        if(tiempo[cont]==':'){
+          cont++;
         }
-      }
-  }/*
-  if(cm > 5){
-    //Lo volvemos a centrar  
-    //Le damos tiempo a llegar a esa posicion  
-    //t.pulse(9, 0.1 * 60 * 1000, HIGH); // 5 segundos
-    //servo.write(90);
-    //delay(1000);
-    timer1->setOnTimer(&Puerta1);
-    timer1->Start();
-    timer2->Stop();
-    timer2->Update();
-  }else{
-    //Lo volvemos a centrar  
-    
-    //Le damos tiempo a llegar a esa posicion  
-    //t.pulse(9, 0.3 * 60 * 1000, HIGH); // 5 segundos
-    //servo.write(0);
-    timer2->setOnTimer(&Puerta2);
-    timer2->Start();
-    timer1->Stop();
-    timer1->Update();
+        
+        tiempo[cont] = key;
+        cont++;
+        lcd.print(tiempo);
   }
-  timer1->Update();
-  timer2->Update();*/
+
+  if(cont == 6){
+    //coje el valor del teclado
+    h1[0] = tiempo[0];
+    h2[0] = tiempo[1];
+    
+    char combined[30] = {0};
+    if(one[0] == '0'){
+      char vacio[1] = {0};
+      strcat(combined, vacio);
+    }else{
+      strcat(combined, one);
+    }
+    
+    strcat(combined, two);
+    String hora = String(combined);
+    lcd.begin(0, 0);
+    long int horaTotalSegundo = hora.toInt()*1000*360;
+    Serial.print(horaTotalSegundotal);
+    lcd.print(horaTotalSegundo);
+  }
   
+  if(myThread.shouldRun()){
+      myThread.run();
+  }
 }
