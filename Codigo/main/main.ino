@@ -6,7 +6,16 @@
 #include <NewList.h>
 #include <String.h>
 //#include <DueTimer.h>
+#include <SoftwareSerial.h>
 
+
+
+#define RxD 0
+#define TxD 1
+#define RST 5
+
+SoftwareSerial BTSerial(RxD,TxD);
+char tiempoBluetooth[10] ={0};
 Thread myThread = Thread();
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // LCD arduino library
 Ultrasonic ultrasonic(10,8); // (Trig PIN,Echo PIN)
@@ -33,16 +42,18 @@ char m2[2] = {0};
 //h1h2:m1m2
 long int horaTotalSegundo = 0;
 long int minTotalSegundo = 0;
+String hora = "";
+String minu = ""; 
 
 void setup() {
   lcd.begin(16, 2);
   servo.attach(9);
   lcd.print(tiempo);
- 
+  BTSerial.begin(9600);
   //delay(2000);
   lcd.clear();
   myThread.onRun(abreServo);
-  myThread.setInterval(3000); //5000 segundos
+  myThread.setInterval(3000); //3 segundos
   //Inicializamos la comunicacion por Serial
   Serial.begin(9600);
 }
@@ -55,6 +66,10 @@ void abreServo(){
 
 int calculaHoraAsegundo(int hora){
   return hora * 360 * 1000;
+}
+
+int calculaMinAsegundo(int minu){
+  return minu * 60 * 1000;
 }
 
 void loop(){
@@ -88,30 +103,38 @@ void loop(){
     h2[0] = tiempo[1];
     m1[0] = tiempo[3];
     m2[0] = tiempo[4];
-    char combined[30] = {0};/*
-    if(h1[0] == '0'){
-      char vacio[1] = {0};
-      strcat(combined, vacio);
-    }
-    if(h2[0]){
-      
-    }
-    else{
-      strcat(combined, h1);
-    }
-    */
+    char tiempoTotalHora[10] = {0};
+    char tiempoTotalMinuto[10] = {0};
     
-    strcat(combined, h2);
-    String hora = String(combined);
+    strcat(tiempoTotalHora, h1);
+    strcat(tiempoTotalHora, h2);
+    strcat(tiempoTotalMinuto, m1);
+    strcat(tiempoTotalMinuto, m2);
+    
+    hora = String(tiempoTotalHora);
+    minu = String(tiempoTotalMinuto); 
     lcd.begin(0, 0);
     horaTotalSegundo = hora.toInt()*1000*360;
-    //minTotalSegundo = minTotalSegundo.toInt()*10000*60;
-    Serial.print(horaTotalSegundo);
+    minTotalSegundo = minu.toInt()*1000*60;
+    Serial.print(horaTotalSegundo+minTotalSegundo);
+    myThread.setInterval(horaTotalSegundo+minTotalSegundo);
     //delay(5000);
     
     Serial.print("\n");
     lcd.print(horaTotalSegundo);
   }
+
+  if(BTSerial.available()){
+      //Serial.write(BTSerial.read());
+  }
+  if (Serial.available()){
+      //BTSerial.write(Serial.read());
+      char a = Serial.read();
+      Serial.print(a);
+      myThread.setInterval(a);
+  }
+
+
   
   if(myThread.shouldRun()){
       myThread.run();
