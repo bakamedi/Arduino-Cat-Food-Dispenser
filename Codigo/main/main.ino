@@ -30,6 +30,9 @@ char h1[2] = {0};
 char h2[2] = {0};
 char m1[2] = {0};
 char m2[2] = {0};
+//h1h2:m1m2
+long int horaTotalSegundo = 0;
+long int minTotalSegundo = 0;
 
 void setup() {
   lcd.begin(16, 2);
@@ -39,14 +42,14 @@ void setup() {
   //delay(2000);
   lcd.clear();
   myThread.onRun(abreServo);
-  myThread.setInterval(5000); //5000 segundos
+  myThread.setInterval(3000); //5000 segundos
   //Inicializamos la comunicacion por Serial
   Serial.begin(9600);
 }
 
 void abreServo(){
   servo.write(90);
-  delay(1000);
+  delay(500);
   servo.write(0);
 }
 
@@ -74,6 +77,8 @@ void loop(){
         
         tiempo[cont] = key;
         cont++;
+        Serial.print(tiempo);
+        Serial.print("\n");
         lcd.print(tiempo);
   }
 
@@ -81,20 +86,30 @@ void loop(){
     //coje el valor del teclado
     h1[0] = tiempo[0];
     h2[0] = tiempo[1];
-    
-    char combined[30] = {0};
-    if(one[0] == '0'){
+    m1[0] = tiempo[3];
+    m2[0] = tiempo[4];
+    char combined[30] = {0};/*
+    if(h1[0] == '0'){
       char vacio[1] = {0};
       strcat(combined, vacio);
-    }else{
-      strcat(combined, one);
     }
+    if(h2[0]){
+      
+    }
+    else{
+      strcat(combined, h1);
+    }
+    */
     
-    strcat(combined, two);
+    strcat(combined, h2);
     String hora = String(combined);
     lcd.begin(0, 0);
-    long int horaTotalSegundo = hora.toInt()*1000*360;
-    Serial.print(horaTotalSegundotal);
+    horaTotalSegundo = hora.toInt()*1000*360;
+    //minTotalSegundo = minTotalSegundo.toInt()*10000*60;
+    Serial.print(horaTotalSegundo);
+    //delay(5000);
+    
+    Serial.print("\n");
     lcd.print(horaTotalSegundo);
   }
   
