@@ -6,6 +6,7 @@
 #include <NewList.h>
 #include <String.h>
 #include <SoftwareSerial.h>
+#include <NewPing.h>
 
 #define RxD 0
 #define TxD 1
@@ -14,8 +15,11 @@
 SoftwareSerial BTSerial(RxD,TxD);
 //TimedAction timedAction1;
 Thread myThread = Thread();
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // LCD arduino library
-Ultrasonic ultrasonic(10,8); // (Trig PIN,Echo PIN)
+//LiquidCrystal lcd(7, 6, 5, 4, 3, 2); // LCD arduino library
+//ultrasonido
+Ultrasonic ultraComidaNotifica(10,8);// (Trig PIN,Echo PIN)
+Ultrasonic ultraAguaNotifica(6,7);// (Trig PIN,Echo PIN)
+Ultrasonic ultraElectroValvula(4,5);// (Trig PIN,Echo PIN)
 Servo servo;  // Crea un Objeto servo
 //Teclado
 const byte rows = 4; //four rows
@@ -31,7 +35,7 @@ byte rowPins[rows] = {A0, A1, A2, A3}; //connect to the row pinouts of the keypa
 byte colPins[cols] = {A4, A5, 11}; //connect to the column pinouts of the keypad
 Keypad myKeypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 String tiempoHoraMinBlueTooth;
-int long tiempoEsperaServo = 5000;//3 segundos
+int long tiempoEsperaServo = 10000;//3 segundos
 char tiempo[6]="00:00";
 char tiempoBluetooth[10] ={0};
 int cont = 0;
@@ -45,19 +49,37 @@ long int horaTotalSegundo = 0;
 long int minTotalSegundo = 0;
 String hora = "";
 String minu = ""; 
+//hora electrovalvula
+int valvula=12;       //Utilizamos el Pin 12 para conectar la electroválvulas
 
 
 void setup() {
-  lcd.begin(16, 2);
+ // lcd.begin(16, 2);
   servo.attach(9);
-  lcd.print(tiempo);
+//  lcd.print(tiempo);
   //delay(2000);
-  lcd.clear();
+  //lcd.clear();
+  pinMode(valvula,OUTPUT);
+  //digitalWrite(valvula,LOW);
   myThread.onRun(abreServo);
   myThread.setInterval(tiempoEsperaServo); 
   //Inicializamos la comunicacion por Serial
   Serial.begin(9600);
   BTSerial.begin(9600);
+}
+
+void abreValvula(){
+  //valvula
+  //digitalWrite(valvula,LOW);
+  //delay(3000);
+  
+  //delay(2000);
+  //Serial.println("ELECTROVALVULA");
+  digitalWrite(valvula,HIGH);
+  delay(5000);
+  digitalWrite(valvula,LOW);
+  //delay(2000);
+  //delay(3000);
 }
 
 void abreServo(){
@@ -75,43 +97,75 @@ int calculaMinAsegundo(int minu){
 }
 
 void loop(){
-  int cm;
+  unsigned int cmComidaNotifica,cmAguaNotifica,cmElectrovalvula;
+  
+  cmComidaNotifica = ultraComidaNotifica.Ranging(CM);
+  cmAguaNotifica = ultraAguaNotifica.Ranging(CM);
+  cmElectrovalvula = ultraElectroValvula.Ranging(CM);
+  
+  //Serial.print("COMIDA: ");
+  //Serial.print(cmComidaNotifica); // CM or INC
+  //Serial.print(" cm     " );
+  delay(50);
+  //Serial.print("AGUA: ");
+  //Serial.print(cmAguaNotifica); // CM or INC
+  //Serial.println(" cm" );
+  //delay(50);
+  //Serial.print("ELECTROVALVULA: ");
+  //Serial.print(cmElectrovalvula); // CM or INC
+  //Serial.println(" cm" );
   
   
-  //t.update();
-  //Lo llevamos a un extremo  
-  //servo.write(0);
-  cm = ultrasonic.Ranging(CM);
-  //Serial.print(ultrasonic.Ranging(CM)*0.01); // CM or INC
-  //Serial.print("cm \n");
-  delay(1000);
-  if(cm == 3){
-    Serial.println(int(2));
-    delay(1000);
-  }
-  if(cm == 6){
-    Serial.println(int(1));
-    delay(1000);
-  }
-  if(cm == 10){
+  //Ultrasonido COMIDA
+  if(cmComidaNotifica == 10){
     Serial.println(int(0));
     delay(1000);
   }
+  if(cmComidaNotifica == 6){
+    Serial.println(int(1));
+    delay(1000);
+  }
+  if(cmComidaNotifica == 3){
+    Serial.println(int(2));
+    delay(1000);
+  }
+  //Ultrasonido Agua
+  if(cmAguaNotifica == 10){
+    Serial.println(int(3));
+    delay(1000);
+  }
+  if(cmAguaNotifica == 6){
+    Serial.println(int(4));
+    delay(1000);
+  }
+  if(cmAguaNotifica == 3){
+    Serial.println(int(5));
+    delay(1000);
+  }
+  //Ultrasonido ElectroValvula AGUA
+  if(cmElectrovalvula <= 5){
+    abreValvula();
+  }
+  else{
+  }
+  
   
   
   char key = myKeypad.getKey();
   if (key=='1'||key=='2'||key=='3'||key=='4'||key=='5'||key=='6'||key=='7'||key=='8'||key=='9'||key=='0'){
       //lcd.print(key);
-      lcd.clear();
+      //lcd.clear();
         if(tiempo[cont]==':'){
           cont++;
         }
         
         tiempo[cont] = key;
         cont++;
-        //Serial.print(tiempo);
-        //Serial.print("\n");
-        lcd.print(tiempo);
+        Serial.print(tiempo);
+        Serial.print("\n");
+        //lcd.print(tiempo);
+        Serial.print("Tiempo : ");
+        Serial.println(tiempo);
   }
 
   if(cont == 6){
@@ -130,7 +184,7 @@ void loop(){
     
     hora = String(tiempoTotalHora);
     minu = String(tiempoTotalMinuto); 
-    lcd.begin(0, 0);
+    //lcd.begin(0, 0);
     horaTotalSegundo = hora.toInt()*1000*360;
     minTotalSegundo = minu.toInt()*1000*60;
     tiempoEsperaServo = horaTotalSegundo+minTotalSegundo;
@@ -138,13 +192,17 @@ void loop(){
     //timedAction1 = TimedAction(tiempoEsperaServo,abreServo);
     //timedAction1.check();
     myThread.setInterval(tiempoEsperaServo);
+    tiempo[0] = 0;
+    tiempo[1] = 0;
+    tiempo[3] = 0;
+    tiempo[4] = 0;
     //delay(5000);
     //Serial.print("\n");
-    lcd.print(horaTotalSegundo);
+    //lcd.print(horaTotalSegundo);
     cont = 0;
   }
 
-  /*
+  
   if(BTSerial.available()){
       //Serial.write(BTSerial.read());
   }
@@ -160,16 +218,12 @@ void loop(){
       myThread.onRun(abreServo);
       tiempoEsperaServo = tiempoHoraMinBlueTooth.toInt();
   }
-  */
+  
   if( myThread.shouldRun()){
       //myThread.setInterval(tiempoEsperaServo);
       myThread.run();
       //Hilo Servo Arduino Stop
   }
   
-  
-  
-  //Serial.print("\n");
-  //Serial.print(tiempoEsperaServo);
   
 }
