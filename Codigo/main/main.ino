@@ -60,14 +60,13 @@ void setup() {
   myThread.onRun(abreServo);
   myThread.setInterval(tiempoEsperaServo); 
   //Inicializamos la comunicacion por Serial
-  Serial.begin(9600
-  );
+  Serial.begin(9600);
   BTSerial.begin(9600);
 }
 
 void abreValvula(){
   digitalWrite(valvula,HIGH);
-  delay(2500);
+  delay(5000);
   digitalWrite(valvula,LOW);
 }
 
@@ -84,39 +83,39 @@ void loop(){
   cmComidaNotifica = ultraComidaNotifica.Ranging(CM);
   cmAguaNotifica = ultraAguaNotifica.Ranging(CM);
   cmElectrovalvula = ultraElectroValvula.Ranging(CM);
-  //Serial.print("ELECTROVALVULA: ");
-  //Serial.print(cmElectrovalvula); // CM or INC
+  //Serial.print("COMIDA: ");
+  //Serial.print(cmComidaNotifica); // CM or INC
   //Serial.println(" cm" );
-  delay(50);
+  delay(500);
   
   //Ultrasonido COMIDA
-  if(cmComidaNotifica == 20){
+  if(cmComidaNotifica >= 15){
     Serial.println(int(0));
     delay(1000);
   }
-  if(cmComidaNotifica == 15){
+  if(cmComidaNotifica >= 4 && cmComidaNotifica<=12){
     Serial.println(int(1));
     delay(1000);
   }
-  if(cmComidaNotifica  <= 6){
+  if(cmComidaNotifica  < 4){
     Serial.println(int(2));
     delay(1000);
   }
   //Ultrasonido Agua
-  if(cmAguaNotifica == 20){
+  if(cmAguaNotifica >= 20){
     Serial.println(int(3));
     delay(1000);
   }
-  if(cmAguaNotifica == 12){
+  if(cmAguaNotifica >= 4 && cmAguaNotifica <=12){
     Serial.println(int(4));
     delay(1000);
   }
-  if(cmAguaNotifica <= 6){
+  if(cmAguaNotifica < 4){
     Serial.println(int(5));
     delay(1000);
   }
   //Ultrasonido ElectroValvula AGUA
-  if(cmElectrovalvula == 10){
+  if(cmElectrovalvula == 9){
     abreValvula();
   }
   else{
@@ -131,11 +130,11 @@ void loop(){
         }
         tiempo[cont] = key;
         cont++;
-        //Serial.print(tiempo);
-        //Serial.print("\n");
+        Serial.print(tiempo);
+        Serial.print("\n");
         lcd.print(tiempo);
-        //Serial.print("Tiempo : ");
-        //Serial.println(tiempo);
+        Serial.print("Tiempo : ");
+        Serial.println(tiempo);
   }
 
   if(cont == 6){
